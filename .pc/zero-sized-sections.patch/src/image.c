@@ -232,16 +232,13 @@ static int image_pecoff_parse(struct image *image)
 	image->opthdr.addr = image->pehdr + 1;
 	magic = pehdr_u16(image->pehdr->f_magic);
 
-	switch (magic) {
-	case IMAGE_FILE_MACHINE_AMD64:
-	case IMAGE_FILE_MACHINE_AARCH64:
+	if (magic == IMAGE_FILE_MACHINE_AMD64) {
 		rc = image_pecoff_parse_64(image);
-		break;
-	case IMAGE_FILE_MACHINE_I386:
-	case IMAGE_FILE_MACHINE_THUMB:
+
+	} else if (magic == IMAGE_FILE_MACHINE_I386) {
 		rc = image_pecoff_parse_32(image);
-		break;
-	default:
+
+	} else {
 		fprintf(stderr, "Invalid PE header magic\n");
 		return -1;
 	}
@@ -369,7 +366,6 @@ static int image_find_regions(struct image *image)
 	/* add COFF sections */
 	for (i = 0; i < image->sections; i++) {
 		uint32_t file_offset, file_size;
-		int n;
 
 		file_offset = pehdr_u32(image->scnhdr[i].s_scnptr);
 		file_size = pehdr_u32(image->scnhdr[i].s_size);
@@ -377,39 +373,39 @@ static int image_find_regions(struct image *image)
 		if (!file_size)
 			continue;
 
-		n = image->n_checksum_regions++;
+		image->n_checksum_regions++;
 		image->checksum_regions = talloc_realloc(image,
 				image->checksum_regions,
 				struct region,
 				image->n_checksum_regions);
 		regions = image->checksum_regions;
 
-		regions[n].data = buf + file_offset;
-		regions[n].size = align_up(file_size,
+		regions[i + 3].data = buf + file_offset;
+		regions[i + 3].size = align_up(file_size,
 					image->file_alignment);
-		regions[n].name = talloc_strndup(image->checksum_regions,
+		regions[i + 3].name = talloc_strndup(image->checksum_regions,
 					image->scnhdr[i].s_name, 8);
-		bytes += regions[n].size;
+		bytes += regions[i + 3].size;
 
-		if (file_offset + regions[n].size > image->size) {
+		if (file_offset + regions[i+3].size > image->size) {
 			fprintf(stderr, "warning: file-aligned section %s "
 					"extends beyond end of file\n",
-					regions[n].name);
+					regions[i+3].name);
 		}
 
-		if (regions[n-1].data + regions[n-1].size
-				!= regions[n].data) {
+		if (regions[i+2].data + regions[i+2].size
+				!= regions[i+3].data) {
 			fprintf(stderr, "warning: gap in section table:\n");
 			fprintf(stderr, "    %-8s: 0x%08tx - 0x%08tx,\n",
-					regions[n-1].name,
-					regions[n-1].data - buf,
-					regions[n-1].data +
-						regions[n-1].size - buf);
+					regions[i+2].name,
+					regions[i+2].data - buf,
+					regions[i+2].data +
+						regions[i+2].size - buf);
 			fprintf(stderr, "    %-8s: 0x%08tx - 0x%08tx,\n",
-					regions[n].name,
-					regions[n].data - buf,
-					regions[n].data +
-						regions[n].size - buf);
+					regions[i+3].name,
+					regions[i+3].data - buf,
+					regions[i+3].data +
+						regions[i+3].size - buf);
 
 
 			gap_warn = 1;

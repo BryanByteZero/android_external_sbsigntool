@@ -56,8 +56,7 @@
 #include "efivars.h"
 
 #define EFIVARS_MOUNTPOINT	"/sys/firmware/efi/efivars"
-#define PSTORE_FSTYPE		0x6165676C
-#define EFIVARS_FSTYPE		0xde5e81e4
+#define EFIVARS_FSTYPE		0x6165676C
 
 #define EFI_IMAGE_SECURITY_DATABASE_GUID \
 	{ 0xd719b2cb, 0x3d3a, 0x4596, \
@@ -534,7 +533,7 @@ static int check_efivars_mount(const char *mountpoint)
 	if (rc)
 		return -1;
 
-	if (statbuf.f_type != EFIVARS_FSTYPE && statbuf.f_type != PSTORE_FSTYPE)
+	if (statbuf.f_type != EFIVARS_FSTYPE)
 		return -1;
 
 	return 0;
