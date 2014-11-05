@@ -34,7 +34,14 @@
 
 #include <stdint.h>
 
-#include <bfd.h>
+typedef unsigned char bfd_byte;
+#define BFD_HOST_U_64_BIT unsigned long long
+typedef BFD_HOST_U_64_BIT bfd_vma;
+
+#ifndef ATTRIBUTE_PACKED
+#define ATTRIBUTE_PACKED __attribute__ ((packed))
+#endif
+
 #define DO_NOT_DEFINE_LINENO
 
 #include "coff/external.h"
